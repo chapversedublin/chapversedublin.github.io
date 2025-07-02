@@ -308,10 +308,7 @@
         </div>
         <div class="cafe-subtitle">Simple Tastes Better</div>
       </div>
-      <form
-        action="https://your-railway-app.up.railway.app/login"
-        method="POST"
-      >
+      <form id="login-form">
         <input type="text" name="username" placeholder="Username" required />
         <input
           type="password"
@@ -322,6 +319,43 @@
         <div class="forgot"><a href="#">Forgot password?</a></div>
         <button type="submit">Login</button>
       </form>
+      <div
+        id="login-message"
+        style="text-align: center; margin-top: 1em; color: #b5835d"
+      ></div>
     </div>
+    <script>
+      document
+        .getElementById("login-form")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+          const username = this.username.value;
+          const password = this.password.value;
+          const messageDiv = document.getElementById("login-message");
+          messageDiv.textContent = "Logging in...";
+          try {
+            const res = await fetch(
+              "https://your-railway-app.up.railway.app/login",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, password }),
+              }
+            );
+            const data = await res.json();
+            if (res.ok) {
+              messageDiv.style.color = "#4a4e69";
+              messageDiv.textContent = "Login successful!";
+              // Optionally redirect: window.location.href = '/dashboard.html';
+            } else {
+              messageDiv.style.color = "#b5835d";
+              messageDiv.textContent = data.error || "Login failed";
+            }
+          } catch (err) {
+            messageDiv.style.color = "#b5835d";
+            messageDiv.textContent = "Network error. Please try again.";
+          }
+        });
+    </script>
   </body>
 </html>
