@@ -108,10 +108,7 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 0.7em;
-        margin-bottom: 2.5em;
-        text-align: center;
-        position: relative;
+        margin-bottom: 1.2em;
       }
       .cafe-logo img {
         height: 48px;
@@ -124,7 +121,9 @@
         font-size: 1.5em;
         margin: 0;
         font-weight: 700;
-        letter-spacing: 1px;
+        letter-spacing: 0.01em;
+        text-align: center;
+        margin-bottom: 0.1em;
       }
       .dashboard-header::after {
         content: "";
@@ -415,7 +414,7 @@
         justify-content: flex-start;
         align-items: stretch;
         gap: 1.2em;
-        margin: 1.5em auto 0.5em auto;
+        margin: 0.5em auto 0.3em auto;
         width: 100%;
         max-width: 1100px;
       }
@@ -505,46 +504,51 @@
         <div class="modal-content">
           <span class="close-modal" id="close-modal-btn">&times;</span>
           <h2>Add Inventory Item</h2>
-          <form id="inventory-form">
+          <form id="inventory-form" class="modal-form">
             <div class="modal-form-row">
-              <label>SKU*<input type="text" name="sku" required /></label>
-              <label>Name*<input type="text" name="name" required /></label>
-              <label
-                >Image URL*<input type="text" name="image_url" required
-              /></label>
-              <label>Description<input type="text" name="description" /></label>
-              <label
-                >Quantity*<input type="number" name="quantity" min="0" required
-              /></label>
-              <label
-                >Price*<input
-                  type="number"
-                  name="price"
-                  min="0"
-                  step="0.01"
-                  required
-              /></label>
-              <label
-                >Promo Name<input type="text" name="discount_name"
-              /></label>
-              <label
-                >Discount Percent<input
-                  type="number"
-                  name="discount_percentage"
-                  min="0"
-                  max="100"
-                  step="0.01"
-              /></label>
-              <label
-                >Discount Amount<input
-                  type="number"
-                  name="discount_amount"
-                  min="0"
-                  step="0.01"
-              /></label>
-              <label
-                >Discount Dates<input type="text" name="discount_dates"
-              /></label>
+              <label>SKU*
+                <input type="text" name="sku" required />
+              </label>
+              <label>Name*
+                <input type="text" name="name" required />
+              </label>
+            </div>
+            <div class="modal-form-row">
+              <label>Description
+                <input type="text" name="description" />
+              </label>
+              <label>Image URL*
+                <input type="text" name="image_url" required />
+              </label>
+            </div>
+            <div class="modal-form-row">
+              <label>RRP Price*
+                <input type="number" name="price" min="0" step="0.01" required />
+              </label>
+              <label>Promo Name
+                <input type="text" name="discount_name" />
+              </label>
+            </div>
+            <div class="modal-form-row">
+              <label>Discount Percent
+                <input type="number" name="discount_percentage" min="0" max="100" step="0.01" />
+              </label>
+              <label>Discount Amount
+                <input type="number" name="discount_amount" min="0" step="0.01" />
+              </label>
+            </div>
+            <div class="modal-form-row">
+              <label>Discount Dates (From)
+                <input type="date" name="discount_from" />
+              </label>
+              <label>Discount Dates (To)
+                <input type="date" name="discount_to" />
+              </label>
+            </div>
+            <div class="modal-form-row">
+              <label>Quantity*
+                <input type="number" name="quantity" min="0" required />
+              </label>
             </div>
             <button type="submit" class="modal-submit-btn">Add Item</button>
             <span
@@ -658,7 +662,7 @@
       <td>${item.discount_name || ""}</td>
       <td>${discountPercentage}</td>
       <td>${discountAmount}</td>
-      <td>${item.discount_dates || ""}</td>
+      <td>${formatDiscountDates(item.discount_dates)}</td>
       <td>
         <div class="operations-btns">
           <button class="edit-btn" data-sku="${item.sku}" title="Edit">
@@ -726,6 +730,13 @@
                   : amountCell.textContent.replace("€", ""),
               discount_dates: datesCell.textContent,
             };
+            // Parse discount_dates for from/to
+            let fromVal = "", toVal = "";
+            if (current.discount_dates && current.discount_dates.includes("to")) {
+              [fromVal, toVal] = current.discount_dates.split("to").map(s => s.trim());
+            } else if (current.discount_dates) {
+              fromVal = current.discount_dates.trim();
+            }
             // Render editable row
             row.innerHTML = `
               <td><input type="text" value="${current.image_url}" style="width:60px" /></td>
@@ -737,7 +748,11 @@
               <td><input type="text" value="${current.discount_name}" /></td>
               <td><input type="number" value="${current.discount_percentage}" min="0" max="100" step="0.01" /></td>
               <td><input type="number" value="${current.discount_amount}" min="0" step="0.01" /></td>
-              <td><input type="text" value="${current.discount_dates}" /></td>
+              <td style="display:flex;gap:0.3em;">
+                <input type="date" class="edit-discount-from" value="${fromVal}" style="width: 7.5em;" />
+                <span style="align-self:center;">to</span>
+                <input type="date" class="edit-discount-to" value="${toVal}" style="width: 7.5em;" />
+              </td>
               <td>—</td>
               <td>
                 <button class="save-btn" title="Save">💾</button>
@@ -751,18 +766,8 @@
             };
             row.querySelector(".save-btn").onclick = async () => {
               // Gather new values
-              const inputs = row.querySelectorAll("input");
-              const [
-                image_url,
-                name,
-                description,
-                quantity,
-                price,
-                discount_name,
-                discount_percentage,
-                discount_amount,
-                discount_dates,
-              ] = [
+              const inputs = row.querySelectorAll('input');
+              const [image_url, name, description, quantity, price, discount_name, discount_percentage, discount_amount, discount_from, discount_to] = [
                 inputs[0].value,
                 inputs[1].value,
                 inputs[2].value,
@@ -772,7 +777,18 @@
                 inputs[6].value,
                 inputs[7].value,
                 inputs[8].value,
+                inputs[9].value
               ];
+              let discount_dates = "";
+              if (discount_from && discount_to) {
+                discount_dates = `${discount_from} to ${discount_to}`;
+              } else if (discount_from) {
+                discount_dates = discount_from;
+              } else if (discount_to) {
+                discount_dates = discount_to;
+              } else {
+                discount_dates = "";
+              }
               // Validation (reuse add form logic)
               if (discount_percentage && discount_amount) {
                 alert(
@@ -800,12 +816,8 @@
                 quantity: Number(quantity),
                 price: Number(price),
                 discount_name,
-                discount_percentage: discount_percentage
-                  ? Number(discount_percentage)
-                  : null,
-                discount_amount: discount_amount
-                  ? Number(discount_amount)
-                  : null,
+                discount_percentage: discount_percentage ? Number(discount_percentage) : null,
+                discount_amount: discount_amount ? Number(discount_amount) : null,
                 discount_dates,
               };
               try {
@@ -938,6 +950,21 @@
 
           msg.textContent = "Adding...";
           try {
+            // Build discount_dates string from from/to
+            let discountFrom = formData.discount_from || "";
+            let discountTo = formData.discount_to || "";
+            if (discountFrom && discountTo) {
+              formData.discount_dates = `${discountFrom} to ${discountTo}`;
+            } else if (discountFrom) {
+              formData.discount_dates = discountFrom;
+            } else if (discountTo) {
+              formData.discount_dates = discountTo;
+            } else {
+              formData.discount_dates = "";
+            }
+            delete formData.discount_from;
+            delete formData.discount_to;
+
             const res = await fetch(
               "https://chapversedublingithubio-production.up.railway.app/inventory",
               {
@@ -962,6 +989,29 @@
             msg.textContent = "Network error.";
           }
         });
+
+      function formatDiscountDates(datesStr) {
+        if (!datesStr) return "";
+        const [from, to] = datesStr.split("to").map(s => s.trim());
+        const format = (d) => {
+          if (!d) return "";
+          const date = new Date(d);
+          if (isNaN(date)) return d; // fallback to raw if invalid
+          const day = date.getDate();
+          const month = date.toLocaleString("default", { month: "long" });
+          const year = date.getFullYear();
+          return `${day} ${month} ${year}`;
+        };
+        if (from && to) {
+          const fromDate = new Date(from);
+          const toDate = new Date(to);
+          if (fromDate.getFullYear() === toDate.getFullYear()) {
+            return `${fromDate.getDate()} ${fromDate.toLocaleString("default", { month: "long" })} to ${toDate.getDate()} ${toDate.toLocaleString("default", { month: "long" })} ${toDate.getFullYear()}`;
+          }
+          return `${format(from)} to ${format(to)}`;
+        }
+        return format(from || to);
+      }
     </script>
   </body>
 </html>

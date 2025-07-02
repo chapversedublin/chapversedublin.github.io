@@ -139,6 +139,22 @@ app.put("/inventory/:sku", async (req, res) => {
   }
 });
 
+// Delete inventory item endpoint
+app.delete("/inventory/:sku", async (req, res) => {
+  const { sku } = req.params;
+  try {
+    const result = await pool.query("DELETE FROM inventory WHERE sku = $1", [
+      sku,
+    ]);
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Item not found" });
+    }
+    res.json({ message: "Inventory item deleted!" });
+  } catch (err) {
+    res.status(400).json({ error: "Failed to delete inventory item." });
+  }
+});
+
 // Health check endpoint
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
