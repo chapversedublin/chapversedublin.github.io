@@ -316,7 +316,9 @@
           placeholder="Password"
           required
         />
-        <div class="forgot"><a href="#">Forgot password?</a></div>
+        <div class="forgot">
+          <a href="#" id="forgot-link">Forgot password?</a>
+        </div>
         <button type="submit">Login</button>
       </form>
       <div
@@ -356,6 +358,16 @@
             messageDiv.style.color = "#b5835d";
             messageDiv.textContent = "Network error. Please try again.";
           }
+        });
+
+      // Forgot password popup
+      document
+        .getElementById("forgot-link")
+        .addEventListener("click", function (e) {
+          e.preventDefault();
+          alert(
+            "☕️ Oops! Forgot your password?\nPlease contact sumukhbhandarkar@gmail.com"
+          );
         });
     </script>
   </body>
