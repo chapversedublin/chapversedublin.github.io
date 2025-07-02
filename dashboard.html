@@ -287,7 +287,7 @@
         border-radius: 18px;
         box-shadow: 0 8px 32px rgba(74, 78, 105, 0.18);
         width: 100%;
-        max-width: 520px;
+        max-width: 600px;
         position: relative;
         animation: modalIn 0.2s;
         overflow-x: auto;
@@ -325,10 +325,11 @@
       .modal-form-row {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.5em;
-        margin-bottom: 1em;
+        gap: 1.2em 2em;
+        margin-bottom: 0.5em;
         align-items: flex-start;
         width: 100%;
+        justify-content: center;
       }
       .modal-form-row label {
         display: flex;
@@ -336,9 +337,12 @@
         font-size: 1em;
         color: #4a4e69;
         font-weight: 500;
-        gap: 0.2em;
+        gap: 0.4em;
         align-items: flex-start;
-        margin-bottom: 0;
+        margin-bottom: 1em;
+        min-width: 210px;
+        flex: 1 1 210px;
+        max-width: 260px;
       }
       .modal-form-row input {
         display: inline-block;
@@ -464,6 +468,8 @@
             <th>Discount Percent</th>
             <th>Discount Amount</th>
             <th>Discount Dates</th>
+            <th>Discounted Price</th>
+            <th>Edit</th>
           </tr>
         </thead>
         <tbody>
@@ -504,29 +510,205 @@
           "https://chapversedublingithubio-production.up.railway.app/inventory"
         );
         const data = await res.json();
+        console.log("Inventory data:", data); // <--- Add this line
         const tbody = document.querySelector("#inventory-table tbody");
         tbody.innerHTML = "";
         data.forEach((item) => {
+          const priceNum = Number(item.price);
+          const discountPercentageNum = Number(item.discount_percentage);
+          const discountAmountNum = Number(item.discount_amount);
+          const price = !isNaN(priceNum) ? "€" + priceNum.toFixed(2) : "";
+          // Discount logic for display
+          let discountPercentage = "";
+          let discountAmount = "";
+          if (!isNaN(discountAmountNum) && discountAmountNum > 0) {
+            discountPercentage = "NA";
+            discountAmount = "€" + discountAmountNum.toFixed(2);
+          } else if (
+            !isNaN(discountPercentageNum) &&
+            discountPercentageNum > 0
+          ) {
+            discountPercentage = discountPercentageNum + "%";
+            discountAmount = "NA";
+          }
+          const imageUrl =
+            item.image_url && item.image_url.trim() !== ""
+              ? item.image_url
+              : "https://via.placeholder.com/60?text=No+Image";
+          // Calculate discounted price
+          let discounted = priceNum;
+          if (!isNaN(discountPercentageNum) && discountPercentageNum > 0) {
+            discounted = discounted * (1 - discountPercentageNum / 100);
+          }
+          if (!isNaN(discountAmountNum) && discountAmountNum > 0) {
+            discounted = discounted - discountAmountNum;
+          }
+          const discountedPrice =
+            !isNaN(discounted) && discounted >= 0
+              ? "€" + discounted.toFixed(2)
+              : "";
           const tr = document.createElement("tr");
           tr.innerHTML = `
-          <td><img src="${item.image_url}" alt="${
+      <td><img src="${imageUrl}" alt="${
             item.name
-          }" class="inventory-img" /></td>
-          <td>${item.sku}</td>
-          <td>${item.name}</td>
-          <td>${item.description || ""}</td>
-          <td>${item.quantity}</td>
-          <td>${item.price ? "₹" + item.price.toFixed(2) : ""}</td>
-          <td>${item.discount_name || ""}</td>
-          <td>${
-            item.discount_percentage ? item.discount_percentage + "%" : ""
-          }</td>
-          <td>${
-            item.discount_amount ? "₹" + item.discount_amount.toFixed(2) : ""
-          }</td>
-          <td>${item.discount_dates || ""}</td>
-        `;
+          }" class="inventory-img" onerror="this.onerror=null;this.src='https://via.placeholder.com/60?text=No+Image';" /></td>
+      <td>${item.sku}</td>
+      <td>${item.name}</td>
+      <td>${item.description || ""}</td>
+      <td>${item.quantity}</td>
+      <td>${price}</td>
+      <td>${item.discount_name || ""}</td>
+      <td>${discountPercentage}</td>
+      <td>${discountAmount}</td>
+      <td>${item.discount_dates || ""}</td>
+      <td>—</td>
+      <td><button class="edit-btn" data-sku="${item.sku}">Edit</button></td>
+    `;
           tbody.appendChild(tr);
+        });
+
+        // Inline edit logic
+        tbody.querySelectorAll(".edit-btn").forEach((btn) => {
+          btn.addEventListener("click", function () {
+            const sku = this.getAttribute("data-sku");
+            const row = this.closest("tr");
+            // Get current values from row
+            const cells = row.querySelectorAll("td");
+            const [
+              imgCell,
+              skuCell,
+              nameCell,
+              descCell,
+              qtyCell,
+              priceCell,
+              promoCell,
+              percentCell,
+              amountCell,
+              datesCell,
+            ] = cells;
+            // Save original row HTML in case of cancel
+            const originalHTML = row.innerHTML;
+            // Get current values
+            const current = {
+              image_url: imgCell.querySelector("img").src,
+              sku: skuCell.textContent,
+              name: nameCell.textContent,
+              description: descCell.textContent,
+              quantity: qtyCell.textContent,
+              price: priceCell.textContent.replace("€", ""),
+              discount_name: promoCell.textContent,
+              discount_percentage:
+                percentCell.textContent === "NA"
+                  ? ""
+                  : percentCell.textContent.replace("%", ""),
+              discount_amount:
+                amountCell.textContent === "NA"
+                  ? ""
+                  : amountCell.textContent.replace("€", ""),
+              discount_dates: datesCell.textContent,
+            };
+            // Render editable row
+            row.innerHTML = `
+              <td><input type="text" value="${current.image_url}" style="width:60px" /></td>
+              <td>${current.sku}</td>
+              <td><input type="text" value="${current.name}" /></td>
+              <td><input type="text" value="${current.description}" /></td>
+              <td><input type="number" value="${current.quantity}" min="0" /></td>
+              <td><input type="number" value="${current.price}" min="0" step="0.01" /></td>
+              <td><input type="text" value="${current.discount_name}" /></td>
+              <td><input type="number" value="${current.discount_percentage}" min="0" max="100" step="0.01" /></td>
+              <td><input type="number" value="${current.discount_amount}" min="0" step="0.01" /></td>
+              <td><input type="text" value="${current.discount_dates}" /></td>
+              <td>—</td>
+              <td>
+                <button class="save-btn">Save</button>
+                <button class="cancel-btn">Cancel</button>
+              </td>
+            `;
+            // Save/cancel logic
+            row.querySelector(".cancel-btn").onclick = () => {
+              row.innerHTML = originalHTML;
+              loadInventory();
+            };
+            row.querySelector(".save-btn").onclick = async () => {
+              // Gather new values
+              const inputs = row.querySelectorAll("input");
+              const [
+                image_url,
+                name,
+                description,
+                quantity,
+                price,
+                discount_name,
+                discount_percentage,
+                discount_amount,
+                discount_dates,
+              ] = [
+                inputs[0].value,
+                inputs[1].value,
+                inputs[2].value,
+                inputs[3].value,
+                inputs[4].value,
+                inputs[5].value,
+                inputs[6].value,
+                inputs[7].value,
+                inputs[8].value,
+              ];
+              // Validation (reuse add form logic)
+              if (discount_percentage && discount_amount) {
+                alert(
+                  "Enter either discount percent or discount amount, not both."
+                );
+                return;
+              }
+              if (discount_amount && Number(discount_amount) >= Number(price)) {
+                alert("Discount amount must be less than price.");
+                return;
+              }
+              if (
+                discount_percentage &&
+                (Number(discount_percentage) < 1 ||
+                  Number(discount_percentage) > 100)
+              ) {
+                alert("Discount percent must be between 1 and 100.");
+                return;
+              }
+              // Send update to backend
+              const payload = {
+                name,
+                image_url,
+                description,
+                quantity: Number(quantity),
+                price: Number(price),
+                discount_name,
+                discount_percentage: discount_percentage
+                  ? Number(discount_percentage)
+                  : null,
+                discount_amount: discount_amount
+                  ? Number(discount_amount)
+                  : null,
+                discount_dates,
+              };
+              try {
+                const res = await fetch(
+                  `https://chapversedublingithubio-production.up.railway.app/inventory/${current.sku}`,
+                  {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
+                  }
+                );
+                if (res.ok) {
+                  loadInventory();
+                } else {
+                  const data = await res.json();
+                  alert(data.error || "Failed to update item.");
+                }
+              } catch (err) {
+                alert("Network error.");
+              }
+            };
+          });
         });
       }
       loadInventory();
@@ -584,6 +766,33 @@
             : null;
 
           const msg = document.getElementById("inventory-form-message");
+          // --- Custom validation ---
+          if (formData.discount_percentage && formData.discount_amount) {
+            msg.style.color = "#b5835d";
+            msg.textContent =
+              "Enter either discount percent or discount amount, not both.";
+            return;
+          }
+          if (
+            formData.discount_amount !== null &&
+            formData.discount_amount !== "" &&
+            formData.discount_amount >= formData.price
+          ) {
+            msg.style.color = "#b5835d";
+            msg.textContent = "Discount amount must be less than price.";
+            return;
+          }
+          if (
+            formData.discount_percentage !== null &&
+            (formData.discount_percentage < 1 ||
+              formData.discount_percentage > 100)
+          ) {
+            msg.style.color = "#b5835d";
+            msg.textContent = "Discount percent must be between 1 and 100.";
+            return;
+          }
+          // --- End custom validation ---
+
           msg.textContent = "Adding...";
           try {
             const res = await fetch(

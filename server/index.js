@@ -89,6 +89,56 @@ app.post("/inventory", async (req, res) => {
   }
 });
 
+// Update inventory item endpoint
+app.put("/inventory/:sku", async (req, res) => {
+  const {
+    name,
+    image_url,
+    description,
+    quantity,
+    price,
+    discount_name,
+    discount_percentage,
+    discount_amount,
+    discount_dates,
+  } = req.body;
+  const { sku } = req.params;
+  try {
+    const result = await pool.query(
+      `UPDATE inventory SET
+        name = $1,
+        image_url = $2,
+        description = $3,
+        quantity = $4,
+        price = $5,
+        discount_name = $6,
+        discount_percentage = $7,
+        discount_amount = $8,
+        discount_dates = $9
+      WHERE sku = $10
+      RETURNING *`,
+      [
+        name,
+        image_url,
+        description,
+        quantity,
+        price,
+        discount_name,
+        discount_percentage,
+        discount_amount,
+        discount_dates,
+        sku,
+      ]
+    );
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Item not found" });
+    }
+    res.json({ message: "Inventory item updated!", item: result.rows[0] });
+  } catch (err) {
+    res.status(400).json({ error: "Failed to update inventory item." });
+  }
+});
+
 // Health check endpoint
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
