@@ -476,6 +476,57 @@
         background: #fff;
       }
     </style>
+    <style>
+      /* Responsive/mobile styles */
+      @media (max-width: 700px) {
+        .main-content {
+          padding-top: 1em;
+        }
+        .dashboard-header {
+          margin-bottom: 0.7em;
+        }
+        .dashboard-title {
+          font-size: 1.1em;
+        }
+        .dashboard-controls {
+          flex-direction: column;
+          gap: 0.7em;
+          max-width: 98vw;
+          width: 98vw;
+          align-items: stretch;
+        }
+        .dashboard-controls .inventory-search-bar,
+        .dashboard-controls .add-item-btn {
+          width: 100%;
+          min-width: 0;
+          max-width: 100%;
+          font-size: 1em;
+        }
+        .table-scroll {
+          max-width: 100vw;
+          width: 100vw;
+          border-radius: 0;
+        }
+        .inventory-table {
+          width: 100vw;
+          min-width: 600px;
+          font-size: 0.95em;
+        }
+        .inventory-table th,
+        .inventory-table td {
+          padding: 0.5em 0.4em;
+        }
+        .modal-content {
+          max-width: 98vw;
+          padding: 1em 0.5em 1em 0.5em;
+        }
+        .custom-footer {
+          font-size: 0.98em;
+          padding: 0.5em 0.5em;
+          margin: 2em auto 1em auto;
+        }
+      }
+    </style>
   </head>
   <body>
     <div class="main-content">
