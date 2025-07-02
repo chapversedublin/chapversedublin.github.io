@@ -1,6 +1,5 @@
 import express from "express";
 import cors from "cors";
-import bcrypt from "bcrypt";
 import pool from "./db.js";
 import dotenv from "dotenv";
 dotenv.config();
@@ -12,11 +11,10 @@ app.use(express.json());
 // Register endpoint (for creating users)
 app.post("/register", async (req, res) => {
   const { username, password } = req.body;
-  const hash = await bcrypt.hash(password, 10);
   try {
     await pool.query(
       'INSERT INTO "admin-mgmt" (username, password) VALUES ($1, $2)',
-      [username, hash]
+      [username, password]
     );
     res.status(201).json({ message: "User registered!" });
   } catch (err) {
@@ -35,8 +33,7 @@ app.post("/login", async (req, res) => {
     return res.status(401).json({ error: "Invalid credentials" });
   }
   const user = result.rows[0];
-  const valid = await bcrypt.compare(password, user.password);
-  if (!valid) {
+  if (user.password !== password) {
     return res.status(401).json({ error: "Invalid credentials" });
   }
   res.json({ message: "Login successful!" });
