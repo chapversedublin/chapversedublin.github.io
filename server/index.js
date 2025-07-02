@@ -42,5 +42,10 @@ app.post("/login", async (req, res) => {
   res.json({ message: "Login successful!" });
 });
 
+// Health check endpoint
+app.get("/health", (req, res) => {
+  res.json({ status: "ok" });
+});
+
 const port = process.env.PORT || 5000;
 app.listen(port, () => console.log(`Server running on port ${port}`));
