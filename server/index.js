@@ -25,19 +25,38 @@ app.post("/register", async (req, res) => {
 // Login endpoint
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
-  const result = await pool.query(
-    'SELECT * FROM "admin-mgmt" WHERE username = $1',
+  try {
+    const userRes = await pool.query(
+      'SELECT * FROM "admin-mgmt" WHERE username = $1 AND password = $2',
+      [username, password]
+    );
+    if (userRes.rows.length === 0) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+    // Return rights in response
+    const rights = userRes.rows[0].rights;
+    res.json({ message: "Login successful", username, rights });
+  } catch (err) {
+    res.status(500).json({ error: "Login failed" });
+  }
+});
+
+// RBAC middleware
+async function checkRights(req, res, next, allowed) {
+  const username = req.headers["x-username"];
+  if (!username) return res.status(401).json({ error: "Unauthorized" });
+  const userRes = await pool.query(
+    'SELECT rights FROM "admin-mgmt" WHERE username = $1',
     [username]
   );
-  if (result.rows.length === 0) {
-    return res.status(401).json({ error: "Invalid credentials" });
+  if (!userRes.rows.length) return res.status(403).json({ error: "Forbidden" });
+  const rights = userRes.rows[0].rights;
+  if (!allowed.includes(rights)) {
+    return res.status(403).json({ error: "Forbidden: Insufficient rights" });
   }
-  const user = result.rows[0];
-  if (user.password !== password) {
-    return res.status(401).json({ error: "Invalid credentials" });
-  }
-  res.json({ message: "Login successful!" });
-});
+  req.userRights = rights;
+  next();
+}
 
 // Inventory endpoint
 app.get("/inventory", async (req, res) => {
@@ -51,61 +70,72 @@ app.get("/inventory", async (req, res) => {
   }
 });
 
-// Add inventory item endpoint
-app.post("/inventory", async (req, res) => {
-  const {
-    sku,
-    name,
-    image_url,
-    description,
-    quantity,
-    price,
-    discount_name,
-    discount_percentage,
-    discount_amount,
-    discount_dates,
-  } = req.body;
-  try {
-    await pool.query(
-      `INSERT INTO inventory
+// Protect add (POST) - admin, staff
+app.post(
+  "/inventory",
+  async (req, res, next) => {
+    await checkRights(req, res, () => next(), ["admin", "staff"]);
+  },
+  async (req, res) => {
+    const {
+      sku,
+      name,
+      image_url,
+      description,
+      quantity,
+      price,
+      discount_name,
+      discount_percentage,
+      discount_amount,
+      discount_dates,
+    } = req.body;
+    try {
+      await pool.query(
+        `INSERT INTO inventory
         (sku, name, image_url, description, quantity, price, discount_name, discount_percentage, discount_amount, discount_dates)
         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
-      [
-        sku,
-        name,
-        image_url,
-        description,
-        quantity,
-        price,
-        discount_name,
-        discount_percentage,
-        discount_amount,
-        discount_dates,
-      ]
-    );
-    res.status(201).json({ message: "Inventory item added!" });
-  } catch (err) {
-    res.status(400).json({ error: "Failed to add inventory item." });
+        [
+          sku,
+          name,
+          image_url,
+          description,
+          quantity,
+          price,
+          discount_name,
+          discount_percentage,
+          discount_amount,
+          discount_dates,
+        ]
+      );
+      res.status(201).json({ message: "Inventory item added!" });
+    } catch (err) {
+      res.status(400).json({ error: "Failed to add inventory item." });
+    }
   }
-});
+);
 
-// Update inventory item endpoint
-app.put("/inventory/:sku", async (req, res) => {
-  const {
-    name,
-    image_url,
-    description,
-    quantity,
-    price,
-    discount_name,
-    discount_percentage,
-    discount_amount,
-    discount_dates,
-  } = req.body;
-  const { sku } = req.params;
-  try {
-    const result = await pool.query(
-      `UPDATE inventory SET
+// Protect edit (PUT) - admin only
+app.put(
+  "/inventory/:sku",
+  async (req, res, next) => {
+    await checkRights(req, res, () => next(), ["admin"]);
+  },
+  async (req, res) => {
+    const {
+      name,
+      image_url,
+      description,
+      quantity,
+      price,
+      discount_name,
+      discount_percentage,
+      discount_amount,
+      discount_dates,
+    } = req.body;
+    const { sku } = req.params;
+    try {
+      const result = await pool.query(
+        `UPDATE inventory SET
         name = $1,
         image_url = $2,
         description = $3,
@@ -117,43 +147,50 @@ app.put("/inventory/:sku", async (req, res) => {
         discount_dates = $9
       WHERE sku = $10
       RETURNING *`,
-      [
-        name,
-        image_url,
-        description,
-        quantity,
-        price,
-        discount_name,
-        discount_percentage,
-        discount_amount,
-        discount_dates,
-        sku,
-      ]
-    );
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: "Item not found" });
+        [
+          name,
+          image_url,
+          description,
+          quantity,
+          price,
+          discount_name,
+          discount_percentage,
+          discount_amount,
+          discount_dates,
+          sku,
+        ]
+      );
+      if (result.rowCount === 0) {
+        return res.status(404).json({ error: "Item not found" });
+      }
+      res.json({ message: "Inventory item updated!", item: result.rows[0] });
+    } catch (err) {
+      res.status(400).json({ error: "Failed to update inventory item." });
     }
-    res.json({ message: "Inventory item updated!", item: result.rows[0] });
-  } catch (err) {
-    res.status(400).json({ error: "Failed to update inventory item." });
   }
-});
+);
 
-// Delete inventory item endpoint
-app.delete("/inventory/:sku", async (req, res) => {
-  const { sku } = req.params;
-  try {
-    const result = await pool.query("DELETE FROM inventory WHERE sku = $1", [
-      sku,
-    ]);
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: "Item not found" });
+// Protect delete (DELETE) - admin only
+app.delete(
+  "/inventory/:sku",
+  async (req, res, next) => {
+    await checkRights(req, res, () => next(), ["admin"]);
+  },
+  async (req, res) => {
+    const { sku } = req.params;
+    try {
+      const result = await pool.query("DELETE FROM inventory WHERE sku = $1", [
+        sku,
+      ]);
+      if (result.rowCount === 0) {
+        return res.status(404).json({ error: "Item not found" });
+      }
+      res.json({ message: "Inventory item deleted!" });
+    } catch (err) {
+      res.status(400).json({ error: "Failed to delete inventory item." });
     }
-    res.json({ message: "Inventory item deleted!" });
-  } catch (err) {
-    res.status(400).json({ error: "Failed to delete inventory item." });
   }
-});
+);
 
 // Health check endpoint
 app.get("/health", (req, res) => {

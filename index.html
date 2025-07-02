@@ -404,10 +404,11 @@
               }
             );
             const data = await res.json();
-            if (res.ok) {
+            if (res.ok && data.rights) {
               messageDiv.style.color = "#4a4e69";
               messageDiv.textContent = "Login successful!";
-              localStorage.setItem("cv_username", username);
+              localStorage.setItem("cv_username", data.username);
+              localStorage.setItem("rights", data.rights);
               window.location.href = "dashboard.html";
             } else {
               messageDiv.style.color = "#b5835d";
