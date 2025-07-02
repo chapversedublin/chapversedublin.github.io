@@ -136,14 +136,21 @@
         opacity: 0.18;
       }
       .inventory-table {
-        width: 90vw;
-        max-width: 900px;
+        width: 98vw;
+        max-width: 1600px;
         border-collapse: collapse;
         background: rgba(255, 255, 255, 0.98);
+        box-shadow: 0 8px 24px rgba(74, 78, 105, 0.1);
+        margin-bottom: 2em;
+      }
+      .table-scroll {
+        max-height: 500px;
+        overflow-y: auto;
+        width: 98vw;
+        max-width: 1600px;
+        margin: 0 auto;
         border-radius: 18px;
         box-shadow: 0 8px 24px rgba(74, 78, 105, 0.1);
-        overflow: hidden;
-        margin-bottom: 2em;
       }
       .inventory-table th,
       .inventory-table td {
@@ -155,6 +162,9 @@
         color: #4a4e69;
         font-size: 1.1em;
         letter-spacing: 0.5px;
+        position: sticky;
+        top: 0;
+        z-index: 2;
       }
       .inventory-table tr:not(:last-child) {
         border-bottom: 1px solid #eee;
@@ -558,26 +568,28 @@
           </form>
         </div>
       </div>
-      <table class="inventory-table" id="inventory-table">
-        <thead>
-          <tr>
-            <th>Image</th>
-            <th>SKU</th>
-            <th>Name</th>
-            <th>Description</th>
-            <th>Quantity Available</th>
-            <th>Price</th>
-            <th>Promo Name</th>
-            <th>Discount Percent</th>
-            <th>Discount Amount</th>
-            <th>Discount Dates</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- Inventory rows will be inserted here by JS -->
-        </tbody>
-      </table>
+      <div class="table-scroll">
+        <table class="inventory-table" id="inventory-table">
+          <thead>
+            <tr>
+              <th>Image</th>
+              <th>SKU</th>
+              <th>Name</th>
+              <th>Description</th>
+              <th>Quantity Available</th>
+              <th>Price</th>
+              <th>Promo Name</th>
+              <th>Discount Percent</th>
+              <th>Discount Amount</th>
+              <th>Discount Dates</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Inventory rows will be inserted here by JS -->
+          </tbody>
+        </table>
+      </div>
     </div>
     <footer class="custom-footer">
       Built with <span class="footer-heart">❤️</span> by
@@ -853,7 +865,10 @@
                   `https://chapversedublingithubio-production.up.railway.app/inventory/${current.sku}`,
                   {
                     method: "PUT",
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                      "Content-Type": "application/json",
+                      "X-Username": localStorage.getItem("cv_username") || ""
+                    },
                     body: JSON.stringify(payload),
                   }
                 );
@@ -879,6 +894,9 @@
                   `https://chapversedublingithubio-production.up.railway.app/inventory/${sku}`,
                   {
                     method: "DELETE",
+                    headers: {
+                      "X-Username": localStorage.getItem("cv_username") || ""
+                    }
                   }
                 );
                 if (res.ok) {
