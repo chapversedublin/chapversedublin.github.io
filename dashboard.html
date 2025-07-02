@@ -761,6 +761,32 @@
                 <button class="cancel-btn" title="Cancel">✖️</button>
               </td>
             `;
+            // --- Discount date validation logic for inline edit ---
+            const editFromInput = row.querySelector('.edit-discount-from');
+            const editToInput = row.querySelector('.edit-discount-to');
+            if (editFromInput && editToInput) {
+              editFromInput.addEventListener('change', function() {
+                if (this.value) {
+                  editToInput.min = this.value;
+                  if (editToInput.value && editToInput.value < this.value) {
+                    editToInput.value = this.value;
+                  }
+                } else {
+                  editToInput.min = '';
+                }
+              });
+              editToInput.addEventListener('change', function() {
+                if (this.value) {
+                  editFromInput.max = this.value;
+                  if (editFromInput.value && editFromInput.value > this.value) {
+                    editFromInput.value = this.value;
+                  }
+                } else {
+                  editFromInput.max = '';
+                }
+              });
+            }
+            // --- End discount date validation logic for inline edit ---
             // Save/cancel logic
             row.querySelector(".cancel-btn").onclick = () => {
               row.innerHTML = originalHTML;
@@ -902,6 +928,33 @@
         if (e.target === modal) modal.style.display = "none";
       });
 
+      // --- Discount date validation logic for modal ---
+      const discountFromInput = document.querySelector('input[name="discount_from"]');
+      const discountToInput = document.querySelector('input[name="discount_to"]');
+      if (discountFromInput && discountToInput) {
+        discountFromInput.addEventListener('change', function() {
+          if (this.value) {
+            discountToInput.min = this.value;
+            if (discountToInput.value && discountToInput.value < this.value) {
+              discountToInput.value = this.value;
+            }
+          } else {
+            discountToInput.min = '';
+          }
+        });
+        discountToInput.addEventListener('change', function() {
+          if (this.value) {
+            discountFromInput.max = this.value;
+            if (discountFromInput.value && discountFromInput.value > this.value) {
+              discountFromInput.value = this.value;
+            }
+          } else {
+            discountFromInput.max = '';
+          }
+        });
+      }
+      // --- End discount date validation logic for modal ---
+
       document
         .getElementById("inventory-form")
         .addEventListener("submit", async function (e) {
@@ -967,7 +1020,10 @@
               "https://chapversedublingithubio-production.up.railway.app/inventory",
               {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                  "Content-Type": "application/json",
+                  "X-Username": localStorage.getItem("cv_username") || ""
+                },
                 body: JSON.stringify(formData),
               }
             );

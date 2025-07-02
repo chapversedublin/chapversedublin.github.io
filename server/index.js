@@ -43,6 +43,7 @@ app.post("/login", async (req, res) => {
 
 // RBAC middleware
 async function checkRights(req, res, next, allowed) {
+  console.log("HEADERS RECEIVED:", req.headers); // Debug log
   const username = req.headers["x-username"];
   if (!username) return res.status(401).json({ error: "Unauthorized" });
   const userRes = await pool.query(
