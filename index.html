@@ -15,10 +15,14 @@
         background: linear-gradient(120deg, #f7e9dc 0%, #f7f4ef 100%);
         min-height: 100vh;
         display: flex;
+        flex-direction: column;
+        margin: 0;
+      }
+      .main-content {
+        flex: 1 0 auto;
+        display: flex;
         justify-content: center;
         align-items: center;
-        position: relative;
-        overflow: hidden;
       }
       body::before {
         content: "";
@@ -301,30 +305,32 @@
         </filter>
       </defs>
     </svg>
-    <div class="login-box">
-      <div class="cafe-header">
-        <div class="cafe-logo">
-          <img src="logo.png" alt="Chapter & Verse Logo" />
+    <div class="main-content">
+      <div class="login-box">
+        <div class="cafe-header">
+          <div class="cafe-logo">
+            <img src="logo.png" alt="Chapter & Verse Logo" />
+          </div>
+          <div class="cafe-subtitle">Simple Tastes Better</div>
         </div>
-        <div class="cafe-subtitle">Simple Tastes Better</div>
+        <form id="login-form">
+          <input type="text" name="username" placeholder="Username" required />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            required
+          />
+          <div class="forgot">
+            <a href="#" id="forgot-link">Forgot password?</a>
+          </div>
+          <button type="submit">Login</button>
+        </form>
+        <div
+          id="login-message"
+          style="text-align: center; margin-top: 1em; color: #b5835d"
+        ></div>
       </div>
-      <form id="login-form">
-        <input type="text" name="username" placeholder="Username" required />
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          required
-        />
-        <div class="forgot">
-          <a href="#" id="forgot-link">Forgot password?</a>
-        </div>
-        <button type="submit">Login</button>
-      </form>
-      <div
-        id="login-message"
-        style="text-align: center; margin-top: 1em; color: #b5835d"
-      ></div>
     </div>
     <footer
       style="
@@ -333,6 +339,7 @@
         color: #9a8c98;
         font-size: 0.98em;
         letter-spacing: 0.2px;
+        flex-shrink: 0;
       "
     >
       Built with <span style="color: #e25555; font-size: 1.1em">❤️</span> by
