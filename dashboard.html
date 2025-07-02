@@ -82,11 +82,13 @@
       </button>
     </div>
     <script>
-      // Get the username from localStorage and display it
+      // Get the username from localStorage and display it in camel case
       const username = localStorage.getItem("cv_username");
-      document.getElementById("username").textContent = username
-        ? username
-        : "Guest";
+      function toCamelCase(str) {
+        if (!str) return "Guest";
+        return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+      }
+      document.getElementById("username").textContent = toCamelCase(username);
     </script>
   </body>
 </html>
