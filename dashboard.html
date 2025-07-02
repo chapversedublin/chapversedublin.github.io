@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chapter & Verse | Dashboard</title>
+    <title>Chapter & Verse | Inventory Dashboard</title>
     <link
       href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@400;500&display=swap"
       rel="stylesheet"
@@ -20,38 +20,152 @@
       .main-content {
         flex: 1 0 auto;
         display: flex;
-        justify-content: center;
+        flex-direction: column;
         align-items: center;
+        justify-content: flex-start;
+        padding-top: 2em;
+        position: relative;
       }
-      .dashboard-box {
-        background: rgba(255, 255, 255, 0.98);
-        padding: 2.5em 2em 2em 2em;
-        box-shadow: 0 12px 32px rgba(74, 78, 105, 0.1);
-        border-radius: 18px;
-        width: 340px;
+      .dashboard-topbar {
+        position: absolute;
+        top: 2em;
+        right: 3vw;
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+        z-index: 2;
+        background: none;
+        padding: 0;
+        border-radius: 0;
+        box-shadow: none;
+      }
+      .dropdown {
+        position: relative;
+        display: inline-block;
+      }
+      .dashboard-username {
+        color: #4a4e69;
+        font-weight: 600;
+        font-size: 1em;
+        letter-spacing: 0.5px;
+        background: #f7e9dc;
+        padding: 0.4em 1.1em;
+        border-radius: 999px;
+        box-shadow: 0 1px 4px rgba(74, 78, 105, 0.08);
+        margin-right: 0.3em;
+        border: 1px solid #e0a96d;
+        cursor: pointer;
+        transition: background 0.2s;
+        user-select: none;
+      }
+      .dashboard-username:hover,
+      .dashboard-username.active {
+        background: #ffe5c2;
+      }
+      .dropdown-content {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: 110%;
+        min-width: 180px;
+        background: #fff;
+        box-shadow: 0 8px 24px rgba(74, 78, 105, 0.13);
+        border-radius: 10px;
+        z-index: 10;
+        padding: 0.5em 0;
+        margin-top: 0.3em;
+      }
+      .dropdown.show .dropdown-content {
+        display: block;
+      }
+      .dropdown-content a,
+      .dropdown-content button {
+        display: block;
+        width: 100%;
+        padding: 0.7em 1.2em;
+        background: none;
+        border: none;
+        text-align: left;
+        color: #4a4e69;
+        font-size: 1em;
+        font-family: inherit;
+        cursor: pointer;
+        transition: background 0.2s, color 0.2s;
+        outline: none;
+      }
+      .dropdown-content a:hover,
+      .dropdown-content button:hover {
+        background: #f7e9dc;
+        color: #b5835d;
+      }
+      .dropdown-content .dropdown-divider {
+        height: 1px;
+        background: #eee;
+        margin: 0.2em 0;
+        border: none;
+      }
+      .dashboard-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.7em;
+        margin-bottom: 2.5em;
         text-align: center;
-      }
-      .cafe-logo {
-        margin-bottom: 1em;
+        position: relative;
       }
       .cafe-logo img {
         height: 48px;
-        width: auto;
-        display: block;
-        margin: 0 auto;
         border-radius: 6px;
         box-shadow: 0 2px 8px rgba(74, 78, 105, 0.08);
       }
-      h1 {
+      .dashboard-title {
         font-family: "Playfair Display", serif;
         color: #4a4e69;
-        font-size: 2em;
-        margin-bottom: 0.3em;
+        font-size: 2.2em;
+        margin: 0;
+        font-weight: 700;
+        letter-spacing: 1px;
       }
-      .subtitle {
-        color: #9a8c98;
+      .dashboard-header::after {
+        content: "";
+        display: block;
+        width: 80px;
+        height: 3px;
+        background: linear-gradient(90deg, #4a4e69 60%, #9a8c98 100%);
+        border-radius: 2px;
+        margin: 1.2em auto 0 auto;
+        opacity: 0.18;
+      }
+      .inventory-table {
+        width: 90vw;
+        max-width: 900px;
+        border-collapse: collapse;
+        background: rgba(255, 255, 255, 0.98);
+        border-radius: 18px;
+        box-shadow: 0 8px 24px rgba(74, 78, 105, 0.1);
+        overflow: hidden;
         margin-bottom: 2em;
+      }
+      .inventory-table th,
+      .inventory-table td {
+        padding: 1em;
+        text-align: left;
+      }
+      .inventory-table th {
+        background: #f7e9dc;
+        color: #4a4e69;
         font-size: 1.1em;
+        letter-spacing: 0.5px;
+      }
+      .inventory-table tr:not(:last-child) {
+        border-bottom: 1px solid #eee;
+      }
+      .inventory-img {
+        height: 60px;
+        width: 60px;
+        object-fit: cover;
+        border-radius: 8px;
+        box-shadow: 0 1px 4px rgba(74, 78, 105, 0.08);
       }
       .logout-btn {
         background: linear-gradient(90deg, #4a4e69 60%, #9a8c98 100%);
@@ -64,6 +178,8 @@
         cursor: pointer;
         transition: background 0.2s, box-shadow 0.2s;
         box-shadow: 0 2px 8px rgba(74, 78, 105, 0.08);
+        margin-bottom: 0;
+        margin-left: 0;
       }
       .logout-btn:hover {
         background: linear-gradient(90deg, #2e3141 60%, #4a4e69 100%);
@@ -96,25 +212,145 @@
       .footer-link:hover {
         color: #b5835d;
       }
+      .inventory-form-container {
+        width: 90vw;
+        max-width: 900px;
+        margin: 0 auto 2em auto;
+        background: rgba(255, 255, 255, 0.98);
+        border-radius: 18px;
+        box-shadow: 0 4px 16px rgba(74, 78, 105, 0.08);
+        padding: 1.5em 2em;
+      }
+      #inventory-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1em;
+        align-items: center;
+        justify-content: space-between;
+      }
+      #inventory-form input {
+        flex: 1 1 160px;
+        min-width: 120px;
+        padding: 0.6em 1em;
+        border: 1px solid #c9ada7;
+        border-radius: 6px;
+        background: #f7f4ef;
+        font-size: 1em;
+      }
+      #inventory-form button {
+        background: linear-gradient(90deg, #4a4e69 60%, #9a8c98 100%);
+        color: white;
+        padding: 0.7em 2em;
+        border: none;
+        border-radius: 6px;
+        font-size: 1.1em;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.2s, box-shadow 0.2s;
+        box-shadow: 0 2px 8px rgba(74, 78, 105, 0.08);
+      }
+      #inventory-form button:hover {
+        background: linear-gradient(90deg, #2e3141 60%, #4a4e69 100%);
+      }
     </style>
   </head>
   <body>
     <div class="main-content">
-      <div class="dashboard-box">
+      <div class="dashboard-topbar">
+        <div class="dropdown">
+          <span class="dashboard-username" id="dashboard-username"></span>
+          <div class="dropdown-content" id="dashboard-dropdown">
+            <a href="#" onclick="event.preventDefault();">Orders</a>
+            <a href="#" onclick="event.preventDefault();">Profile</a>
+            <a href="#" onclick="event.preventDefault();">History</a>
+            <hr class="dropdown-divider" />
+            <button
+              onclick="localStorage.removeItem('cv_username'); window.location.href='index.html'"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="dashboard-header">
         <div class="cafe-logo">
           <img src="logo.png" alt="Chapter & Verse Logo" />
         </div>
-        <h1>Welcome, <span id="username"></span>!</h1>
-        <div class="subtitle">
-          You have successfully logged in to Chapter & Verse.
-        </div>
-        <button
-          class="logout-btn"
-          onclick="localStorage.removeItem('cv_username'); window.location.href='index.html'"
-        >
-          Logout
-        </button>
+        <h1 class="dashboard-title">Inventory Dashboard</h1>
       </div>
+      <div class="inventory-form-container">
+        <form id="inventory-form">
+          <input type="text" name="sku" placeholder="SKU" required />
+          <input type="text" name="name" placeholder="Name" required />
+          <input
+            type="text"
+            name="image_url"
+            placeholder="Image URL"
+            required
+          />
+          <input type="text" name="description" placeholder="Description" />
+          <input
+            type="number"
+            name="quantity"
+            placeholder="Quantity Available"
+            min="0"
+            required
+          />
+          <input
+            type="number"
+            name="price"
+            placeholder="Price"
+            min="0"
+            step="0.01"
+            required
+          />
+          <input type="text" name="discount_name" placeholder="Promo Name" />
+          <input
+            type="number"
+            name="discount_percentage"
+            placeholder="Discount Percent"
+            min="0"
+            max="100"
+            step="0.01"
+          />
+          <input
+            type="number"
+            name="discount_amount"
+            placeholder="Discount Amount"
+            min="0"
+            step="0.01"
+          />
+          <input
+            type="text"
+            name="discount_dates"
+            placeholder="Discount Dates"
+          />
+          <button type="submit">Add Item</button>
+          <span
+            id="inventory-form-message"
+            style="margin-left: 1em; color: #b5835d"
+          ></span>
+        </form>
+      </div>
+      <table class="inventory-table" id="inventory-table">
+        <thead>
+          <tr>
+            <th>Image</th>
+            <th>SKU</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Quantity Available</th>
+            <th>Price</th>
+            <th>Promo Name</th>
+            <th>Discount Percent</th>
+            <th>Discount Amount</th>
+            <th>Discount Dates</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Inventory rows will be inserted here by JS -->
+        </tbody>
+      </table>
     </div>
     <footer class="custom-footer">
       Built with <span class="footer-heart">❤️</span> by
@@ -143,13 +379,103 @@
       from India
     </footer>
     <script>
-      // Get the username from localStorage and display it in camel case
-      const username = localStorage.getItem("cv_username");
+      // Fetch inventory from backend and render table
+      async function loadInventory() {
+        const res = await fetch(
+          "https://chapversedublingithubio-production.up.railway.app/inventory"
+        );
+        const data = await res.json();
+        const tbody = document.querySelector("#inventory-table tbody");
+        tbody.innerHTML = "";
+        data.forEach((item) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+          <td><img src="${item.image_url}" alt="${
+            item.name
+          }" class="inventory-img" /></td>
+          <td>${item.sku}</td>
+          <td>${item.name}</td>
+          <td>${item.description || ""}</td>
+          <td>${item.quantity}</td>
+          <td>${item.price ? "₹" + item.price.toFixed(2) : ""}</td>
+          <td>${item.discount_name || ""}</td>
+          <td>${
+            item.discount_percentage ? item.discount_percentage + "%" : ""
+          }</td>
+          <td>${
+            item.discount_amount ? "₹" + item.discount_amount.toFixed(2) : ""
+          }</td>
+          <td>${item.discount_dates || ""}</td>
+        `;
+          tbody.appendChild(tr);
+        });
+      }
+      loadInventory();
+
+      // Display username in camel case in the topbar
       function toCamelCase(str) {
         if (!str) return "Guest";
         return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
       }
-      document.getElementById("username").textContent = toCamelCase(username);
+      const username = localStorage.getItem("cv_username");
+      document.getElementById("dashboard-username").textContent =
+        toCamelCase(username);
+
+      // Dropdown logic
+      const dropdown = document.querySelector(".dropdown");
+      const usernameBtn = document.getElementById("dashboard-username");
+      usernameBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        dropdown.classList.toggle("show");
+        usernameBtn.classList.toggle("active");
+      });
+      document.addEventListener("click", function (e) {
+        dropdown.classList.remove("show");
+        usernameBtn.classList.remove("active");
+      });
+
+      document
+        .getElementById("inventory-form")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+          const form = e.target;
+          const formData = Object.fromEntries(new FormData(form).entries());
+          // Convert numbers
+          formData.quantity = formData.quantity ? Number(formData.quantity) : 0;
+          formData.price = formData.price ? Number(formData.price) : 0;
+          formData.discount_percentage = formData.discount_percentage
+            ? Number(formData.discount_percentage)
+            : null;
+          formData.discount_amount = formData.discount_amount
+            ? Number(formData.discount_amount)
+            : null;
+
+          const msg = document.getElementById("inventory-form-message");
+          msg.textContent = "Adding...";
+          try {
+            const res = await fetch(
+              "https://chapversedublingithubio-production.up.railway.app/inventory",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(formData),
+              }
+            );
+            const data = await res.json();
+            if (res.ok) {
+              msg.style.color = "#4a4e69";
+              msg.textContent = "Item added!";
+              form.reset();
+              loadInventory();
+            } else {
+              msg.style.color = "#b5835d";
+              msg.textContent = data.error || "Failed to add item.";
+            }
+          } catch (err) {
+            msg.style.color = "#b5835d";
+            msg.textContent = "Network error.";
+          }
+        });
     </script>
   </body>
 </html>
