@@ -893,12 +893,8 @@
       });
 
       // Modal logic
-      const openModalBtn = document.getElementById("open-modal-btn");
       const closeModalBtn = document.getElementById("close-modal-btn");
       const modal = document.getElementById("add-item-modal");
-      openModalBtn.addEventListener("click", () => {
-        modal.style.display = "block";
-      });
       closeModalBtn.addEventListener("click", () => {
         modal.style.display = "none";
       });
@@ -1020,6 +1016,10 @@
       if (['admin', 'staff'].includes(rights)) {
         document.getElementById('add-item-btn-container').innerHTML =
           '<button class="add-item-btn" id="open-modal-btn">+ Add Item</button>';
+        // Attach event listener after button is added
+        document.getElementById("open-modal-btn").addEventListener("click", () => {
+          document.getElementById("add-item-modal").style.display = "block";
+        });
       }
     </script>
   </body>
