@@ -346,7 +346,8 @@
             if (res.ok) {
               messageDiv.style.color = "#4a4e69";
               messageDiv.textContent = "Login successful!";
-              // Optionally redirect: window.location.href = '/dashboard.html';
+              localStorage.setItem("cv_username", username);
+              window.location.href = "dashboard.html";
             } else {
               messageDiv.style.color = "#b5835d";
               messageDiv.textContent = data.error || "Login failed";
