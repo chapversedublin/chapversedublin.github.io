@@ -219,25 +219,29 @@ app.post(
     await checkRights(req, res, () => next(), ["admin", "staff"]);
   },
   async (req, res) => {
-    const { name } = req.body;
+    let { name } = req.body;
     if (!name || !name.trim()) {
       return res.status(400).json({ error: "Category name is required." });
+    }
+    name = name.trim().toUpperCase();
+    // Check for duplicate (case-insensitive)
+    const dupCheck = await pool.query(
+      "SELECT 1 FROM category WHERE UPPER(name) = $1",
+      [name]
+    );
+    if (dupCheck.rows.length > 0) {
+      return res.status(400).json({ error: "Category already exists." });
     }
     try {
       const result = await pool.query(
         "INSERT INTO category (name) VALUES ($1) RETURNING *",
-        [name.trim()]
+        [name]
       );
       res
         .status(201)
         .json({ message: "Category added!", category: result.rows[0] });
     } catch (err) {
-      if (err.code === "23505") {
-        // unique_violation
-        res.status(400).json({ error: "Category already exists." });
-      } else {
-        res.status(400).json({ error: "Failed to add category." });
-      }
+      res.status(400).json({ error: "Failed to add category." });
     }
   }
 );

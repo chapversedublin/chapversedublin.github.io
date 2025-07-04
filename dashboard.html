@@ -246,6 +246,24 @@
         background: #f7f4ef;
         font-size: 1em;
       }
+      #inventory-form select {
+        display: inline-block;
+        width: 180px;
+        height: 2.2em !important;
+        min-height: 0 !important;
+        max-height: 2.2em !important;
+        padding: 0.35em 0.8em;
+        border: 1px solid #c9ada7;
+        border-radius: 6px;
+        background: #f7f4ef;
+        font-size: 1em;
+        color: #4a4e69;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        outline: none;
+        box-sizing: border-box;
+      }
       #inventory-form button {
         background: linear-gradient(90deg, #4a4e69 60%, #9a8c98 100%);
         color: white;
@@ -1228,6 +1246,12 @@
           if (name !== name.toUpperCase()) {
             msg.style.color = "#b5835d";
             msg.textContent = "Category name must be in ALL CAPITAL LETTERS.";
+            return;
+          }
+          // Check for duplicate (case-insensitive, frontend)
+          if (categories.some(cat => cat.name.toUpperCase() === name.toUpperCase())) {
+            msg.style.color = "#b5835d";
+            msg.textContent = "Category already exists.";
             return;
           }
           // Optionally, force uppercase in the input field
