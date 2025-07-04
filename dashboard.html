@@ -692,6 +692,8 @@
       from India
     </footer>
     <script>
+      const API_BASE = "https://chapversedublingithubio-production.up.railway.app";
+
       // Fetch inventory from backend and render table
       async function loadInventory() {
         const res = await fetch(
@@ -1199,7 +1201,7 @@
       let categories = [];
       async function fetchCategories() {
         try {
-          const res = await fetch("/categories");
+          const res = await fetch(`${API_BASE}/categories`);
           categories = await res.json();
           const select = document.getElementById("category-select");
           if (select) {
@@ -1233,7 +1235,7 @@
           name = name.toUpperCase();
           msg.textContent = "Adding...";
           try {
-            const res = await fetch("/categories", {
+            const res = await fetch(`${API_BASE}/categories`, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
