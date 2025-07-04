@@ -560,6 +560,7 @@
           class="inventory-search-bar"
         />
         <div id="add-item-btn-container"></div>
+        <div id="add-category-btn-container"></div>
       </div>
       <div class="modal" id="add-item-modal">
         <div class="modal-content">
@@ -610,12 +611,33 @@
               <label>Quantity*
                 <input type="number" name="quantity" min="0" required />
               </label>
+              <label>Category*
+                <select name="category" id="category-select" required>
+                  <option value="">Select a category</option>
+                </select>
+              </label>
             </div>
             <button type="submit" class="modal-submit-btn">Add Item</button>
             <span
               id="inventory-form-message"
               style="margin-left: 1em; color: #b5835d"
             ></span>
+          </form>
+        </div>
+      </div>
+      <!-- Add Category Modal -->
+      <div class="modal" id="add-category-modal">
+        <div class="modal-content">
+          <span class="close-modal" id="close-category-modal-btn">&times;</span>
+          <h2>Add Category</h2>
+          <form id="category-form" class="modal-form">
+            <div class="modal-form-row">
+              <label>Category Name*
+                <input type="text" name="category_name" id="category_name_input" required style="text-transform:uppercase;" maxlength="50" autocomplete="off" />
+              </label>
+            </div>
+            <button type="submit" class="modal-submit-btn">Add Category</button>
+            <span id="category-form-message" style="margin-left: 1em; color: #b5835d"></span>
           </form>
         </div>
       </div>
@@ -627,6 +649,7 @@
               <th>SKU</th>
               <th>Name</th>
               <th>Description</th>
+              <th>Category</th>
               <th>Quantity Available</th>
               <th>Price</th>
               <th>Promo Name</th>
@@ -720,6 +743,7 @@
       <td>${item.sku}</td>
       <td>${item.name}</td>
       <td>${item.description || ""}</td>
+      <td>${item.category || ""}</td>
       <td>${item.quantity}</td>
       <td>${price}</td>
       <td>${item.discount_name || ""}</td>
@@ -767,6 +791,7 @@
               skuCell,
               nameCell,
               descCell,
+              categoryCell,
               qtyCell,
               priceCell,
               promoCell,
@@ -782,6 +807,7 @@
               sku: skuCell.textContent,
               name: nameCell.textContent,
               description: descCell.textContent,
+              category: categoryCell.textContent,
               quantity: qtyCell.textContent,
               price: priceCell.textContent.replace("€", ""),
               discount_name: promoCell.textContent,
@@ -808,6 +834,7 @@
               <td>${current.sku}</td>
               <td><input type="text" value="${current.name}" /></td>
               <td><input type="text" value="${current.description}" /></td>
+              <td><input type="text" value="${current.category}" /></td>
               <td><input type="number" value="${current.quantity}" min="0" /></td>
               <td><input type="number" value="${current.price}" min="0" step="0.01" /></td>
               <td><input type="text" value="${current.discount_name}" /></td>
@@ -858,7 +885,7 @@
             row.querySelector(".save-btn").onclick = async () => {
               // Gather new values
               const inputs = row.querySelectorAll('input');
-              const [image_url, name, description, quantity, price, discount_name, discount_percentage, discount_amount, discount_from, discount_to] = [
+              const [image_url, name, description, category, quantity, price, discount_name, discount_percentage, discount_amount, discount_from, discount_to] = [
                 inputs[0].value,
                 inputs[1].value,
                 inputs[2].value,
@@ -868,7 +895,8 @@
                 inputs[6].value,
                 inputs[7].value,
                 inputs[8].value,
-                inputs[9].value
+                inputs[9].value,
+                inputs[10].value
               ];
               let discount_dates = "";
               if (discount_from && discount_to) {
@@ -904,6 +932,7 @@
                 name,
                 image_url,
                 description,
+                category,
                 quantity: Number(quantity),
                 price: Number(price),
                 discount_name,
@@ -1145,7 +1174,106 @@
         document.getElementById("open-modal-btn").addEventListener("click", () => {
           document.getElementById("add-item-modal").style.display = "block";
         });
+        document.getElementById('add-category-btn-container').innerHTML =
+          '<button class="add-item-btn" id="open-category-modal-btn">+ Add Category</button>';
+        document.getElementById("open-category-modal-btn").addEventListener("click", () => {
+          document.getElementById("category-form-message").textContent = "";
+          document.getElementById("category_name_input").value = "";
+          document.getElementById("add-category-modal").style.display = "block";
+          document.getElementById("category_name_input").focus();
+        });
+      }
+
+      // Modal logic for Add Category
+      const closeCategoryModalBtn = document.getElementById("close-category-modal-btn");
+      const categoryModal = document.getElementById("add-category-modal");
+      if (closeCategoryModalBtn && categoryModal) {
+        closeCategoryModalBtn.addEventListener("click", () => {
+          categoryModal.style.display = "none";
+        });
+        window.addEventListener("click", (e) => {
+          if (e.target === categoryModal) categoryModal.style.display = "none";
+        });
+      }
+      // --- Category Management Logic ---
+      let categories = [];
+      async function fetchCategories() {
+        try {
+          const res = await fetch("/categories");
+          categories = await res.json();
+          const select = document.getElementById("category-select");
+          if (select) {
+            select.innerHTML = '<option value="">Select a category</option>' +
+              categories.map(cat => `<option value="${cat.name}">${cat.name}</option>`).join("");
+          }
+        } catch (err) {
+          // fallback: do nothing
+        }
+      }
+      fetchCategories();
+      // Add Category form submit
+      const categoryForm = document.getElementById("category-form");
+      if (categoryForm) {
+        categoryForm.addEventListener("submit", async function(e) {
+          e.preventDefault();
+          const msg = document.getElementById("category-form-message");
+          let name = document.getElementById("category_name_input").value.trim();
+          if (!name) {
+            msg.textContent = "Category name is required.";
+            return;
+          }
+          // Enforce uppercase input
+          if (name !== name.toUpperCase()) {
+            msg.style.color = "#b5835d";
+            msg.textContent = "Category name must be in ALL CAPITAL LETTERS.";
+            return;
+          }
+          // Optionally, force uppercase in the input field
+          document.getElementById("category_name_input").value = name.toUpperCase();
+          name = name.toUpperCase();
+          msg.textContent = "Adding...";
+          try {
+            const res = await fetch("/categories", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Username": localStorage.getItem("cv_username") || ""
+              },
+              body: JSON.stringify({ name })
+            });
+            const data = await res.json();
+            if (res.ok) {
+              msg.style.color = "#4a4e69";
+              msg.textContent = `Category '${name}' added!`;
+              this.reset();
+              fetchCategories();
+              setTimeout(() => {
+                msg.textContent = "";
+                document.getElementById("add-category-modal").style.display = "none";
+              }, 1200);
+            } else {
+              msg.style.color = "#b5835d";
+              msg.textContent = data.error || "Failed to add category.";
+            }
+          } catch (err) {
+            msg.style.color = "#b5835d";
+            msg.textContent = "Network error.";
+          }
+        });
+        // Enforce uppercase as user types
+        document.getElementById("category_name_input").addEventListener('input', function() {
+          this.value = this.value.toUpperCase();
+        });
+      }
+
+      // When Add Item modal opens, refresh categories
+      const openItemModalBtn = document.getElementById("open-modal-btn");
+      if (openItemModalBtn) {
+        openItemModalBtn.addEventListener("click", () => {
+          fetchCategories();
+        });
       }
     </script>
   </body>
 </html>
+ 

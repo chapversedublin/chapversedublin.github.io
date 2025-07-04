@@ -62,9 +62,7 @@ async function checkRights(req, res, next, allowed) {
 // Inventory endpoint
 app.get("/inventory", async (req, res) => {
   try {
-    const result = await pool.query(
-      "SELECT sku, name, image_url, description, quantity, price, discount_name, discount_percentage, discount_amount, discount_dates FROM inventory"
-    );
+    const result = await pool.query("SELECT * FROM inventory");
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch inventory" });
@@ -89,12 +87,13 @@ app.post(
       discount_percentage,
       discount_amount,
       discount_dates,
+      category,
     } = req.body;
     try {
       await pool.query(
         `INSERT INTO inventory
-        (sku, name, image_url, description, quantity, price, discount_name, discount_percentage, discount_amount, discount_dates)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+        (sku, name, image_url, description, quantity, price, discount_name, discount_percentage, discount_amount, discount_dates, category)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
         [
           sku,
           name,
@@ -106,6 +105,7 @@ app.post(
           discount_percentage,
           discount_amount,
           discount_dates,
+          category,
         ]
       );
       res.status(201).json({ message: "Inventory item added!" });
@@ -132,6 +132,7 @@ app.put(
       discount_percentage,
       discount_amount,
       discount_dates,
+      category,
     } = req.body;
     const { sku } = req.params;
     try {
@@ -145,8 +146,9 @@ app.put(
         discount_name = $6,
         discount_percentage = $7,
         discount_amount = $8,
-        discount_dates = $9
-      WHERE sku = $10
+        discount_dates = $9,
+        category = $10
+      WHERE sku = $11
       RETURNING *`,
         [
           name,
@@ -158,6 +160,7 @@ app.put(
           discount_percentage,
           discount_amount,
           discount_dates,
+          category,
           sku,
         ]
       );
@@ -197,6 +200,47 @@ app.delete(
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
+
+// --- Category Endpoints ---
+// Get all categories
+app.get("/categories", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM category ORDER BY name ASC");
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch categories" });
+  }
+});
+
+// Add a new category (admin, staff)
+app.post(
+  "/categories",
+  async (req, res, next) => {
+    await checkRights(req, res, () => next(), ["admin", "staff"]);
+  },
+  async (req, res) => {
+    const { name } = req.body;
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: "Category name is required." });
+    }
+    try {
+      const result = await pool.query(
+        "INSERT INTO category (name) VALUES ($1) RETURNING *",
+        [name.trim()]
+      );
+      res
+        .status(201)
+        .json({ message: "Category added!", category: result.rows[0] });
+    } catch (err) {
+      if (err.code === "23505") {
+        // unique_violation
+        res.status(400).json({ error: "Category already exists." });
+      } else {
+        res.status(400).json({ error: "Failed to add category." });
+      }
+    }
+  }
+);
 
 const port = process.env.PORT || 5000;
 app.listen(port, () => console.log(`Server running on port ${port}`));
